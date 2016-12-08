@@ -4,12 +4,12 @@
 class Config(object):
     DEBUG = False
     TESTING = False
-    DATABASE_URI = 'mysql://root@localhost/hackthon'
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SQLALCHEMY_DATABASE_URI = 'mysql://root@localhost:3306/hackthon'
 
 
 class ProductionConfig(Config):
-    DATABASE_URI = 'mysql://root@localhost/hackthon'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root@localhost:3306/hackthon'
