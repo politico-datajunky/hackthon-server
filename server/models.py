@@ -12,7 +12,7 @@ class User(db.Model):
         用户表，记录登录信息
     """
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Integer, unique=True)
+    username = db.Column(db.String(32), unique=True)
     password = db.Column(db.String(256))
 
     def __init__(self, username, password):
@@ -64,6 +64,9 @@ class UserRequire(db.Model):
         condition 为用户在发布需求时要求的技能，用|分隔
         status 0表示可抢状态，1表示发布需求的用户已确定了人选，这个状态下就不能抢单了
     """
+    WAITING = 0
+    ANSWERED = 1
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     title = db.Column(db.Text, nullable=True)
@@ -81,7 +84,9 @@ class UserRequire(db.Model):
         self.condition = condition
         self.reward = reward
         if pub_time is None:
-            self.pub_time = int(time.time()*1000)
+            self.pub_time = int(time.time())
+        else:
+            self.pub_time = pub_time
         self.status = status
         self.answer_user = answer_user
 
@@ -92,14 +97,25 @@ class UserRequire(db.Model):
 class AnswerRequire(db.Model):
     """
         需求抢单表 存储需求的抢单用户
-        users_id存储抢单用户的uid 以|分隔
     """
-    userrequire_id = db.Column(db.Integer, primary_key=True)
-    users_id = db.Column(db.Text)
+    WAITING = 0
+    SUCCESS = 1
+    FAILURE = 2
 
-    def __init__(self, userrequire_id, users_id):
+    id = db.Column(db.Integer, primary_key=True)
+    userrequire_id = db.Column(db.Integer)
+    answer_uid = db.Column(db.Integer)
+    answer_time = db.Column(db.Integer)
+    status = db.Column(db.Integer)
+
+    def __init__(self, userrequire_id, answer_uid, status=0, answer_time=None):
         self.userrequire_id = userrequire_id
-        self.users_id = users_id
+        self.answer_uid = answer_uid
+        self.status = status
+        if answer_time is None:
+            self.answer_time = int(time.time())
+        else:
+            self.answer_time = answer_time
 
     def __repr__(self):
         return '<AnswerRequire %s>' % self.userrequire_id
@@ -169,3 +185,14 @@ class ReplyAwesome(db.Model):
 
     def __repr__(self):
         return '<ReplyAwesome %d>' % self.id
+
+
+class Skill(db.Model):
+    """
+        可选技能
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    skills = db.Column(db.Text)
+
+    def __init__(self, skills):
+        self.skills = skills

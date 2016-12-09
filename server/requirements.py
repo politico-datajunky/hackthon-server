@@ -1,50 +1,148 @@
 # coding: utf-8
-
 from flask import jsonify, request
 from server import app
+from server.models import db, UserRequire, AnswerRequire, Participator
 
-@app.route('/create_requirement', methods=['POST'])
+@app.route('/api/create_requirement', methods=['POST'])
 def create_requirement():
-    uid = request.form['uid']
-    content = request.form['content']
-    require = request.form['require']
-    reward = request.form['reward']
-    time = request.form['time']
-    print request.form
+    uid = request.form.get('uid', '')
+    title = request.form.get('title', '')
+    content = request.form.get('content', '')
+    condition = request.form.get('condition', '')
+    reward = request.form.get('reward', '')
 
-    # todo: 插入数据库，成功，失败
-
-    return jsonify({'status': 100})
-
-
-@app.route('/bid_requirement', methods=['POST'])
-def bid_requirement():
-    uid = request.form['uid']
-    requirement_id = request.form['requirement_id']
-
-    # todo: 查数据库status判断该单是否已经被抢，若没被抢，
-
-    return jsonify({'status': 100})
-
-
-@app.route('/get_requirement', methods=['POST'])
-def get_requirement():
-    uid = request.form['uid']
-    requirement_id = request.form['requirement_id']
-
-    # todo: get需求对象，解析成json返回
+    user_require = UserRequire(uid, title, content, condition, reward)
+    db.session.add(user_require)
+    db.session.commit()
 
     res = {
-        'uid': 100,
-        'content': '我想学java',
-        'require': ['java', 'php'],
-        'reward': '请吃饭',
-        'time': '20161208 00:00:00'
+        'requirement_id': user_require.id
     }
+    return jsonify({'status': 100, 'data': res})
+
+
+@app.route('/api/answer_requirement', methods=['POST'])
+def answer_requirement():
+    uid = request.form.get('uid', '')
+    userrequire_id = request.form.get('requirement_id', '')
+
+    require_status = UserRequire.query.get(userrequire_id).status
+    if require_status == UserRequire.WAITING:
+        answer = AnswerRequire(userrequire_id, uid, AnswerRequire.WAITING)
+        db.session.add(answer)
+        db.session.commit()
+        res = {'status': 100, 'data': '请等待需求发布者接单'}
+    else:
+        res = {'status': 101, 'data': '单已被抢'}
     return jsonify(res)
 
-@app.route('/accept_bidder', methods=['POST'])
-def accept_bidder():
-    uid = request.form['uid']
-    requirement_id = request.form['requirement_id']
 
+@app.route('/api/get_requirement', methods=['POST'])
+def get_requirement():
+    userrequire_id = request.form.get('requirement_id', '')
+    user_require = UserRequire.query.get(userrequire_id)
+    if user_require:
+        publish_user = Participator.query.filter_by(user_id=user_require.user_id)\
+                                         .first()
+        res = {
+            'requirement_id': user_require.id,
+            'uid': user_require.user_id,
+            'title': user_require.title,
+            'content': user_require.content,
+            'condition': user_require.condition,
+            'reward': user_require.reward,
+            'pub_time': user_require.pub_time,
+            'accept_user_id': user_require.answer_user,
+            'answer_users': get_answers(user_require.id),
+            'status': user_require.status,
+            'publish_user': {
+                'uid': publish_user.user_id,
+                'name': publish_user.name,
+                'avatar': publish_user.avatar,
+            }
+        }
+        return jsonify({'status': 100, 'data': res})
+    else:
+        return jsonify({'status': 101, 'data': '需求id错误'})
+
+
+@app.route('/api/accept_answer', methods=['POST'])
+def accept_answer():
+    answer_user_id = request.form.get('answer_user_id', '')
+    userrequire_id = request.form.get('requirement_id', '')
+
+    user_require = UserRequire.query.get(userrequire_id)
+    user_require.answer_user = answer_user_id
+    user_require.status = UserRequire.ANSWERED
+
+    answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id)\
+                                 .all()
+    for answer in answers:
+        if int(answer.answer_uid) == int(answer_user_id):
+            answer.status = AnswerRequire.SUCCESS
+        else:
+            answer.status = AnswerRequire.FAILURE
+    db.session.commit()
+    return jsonify({'status': 100})
+
+
+@app.route('/api/my_requirements', methods=['POST'])
+def my_requirements():
+    uid = request.form.get('uid', '')
+    requirements = UserRequire.query.filter_by(user_id=uid).all()
+    res = []
+    if requirements:
+        for user_require in requirements:
+            user = Participator.query.filter_by(user_id=user_require.user_id)\
+                                     .first()
+            res.append({
+                'requirement_id': user_require.id,
+                'uid': user_require.user_id,
+                'title': user_require.title,
+                'content': user_require.content,
+                'condition': user_require.condition,
+                'reward': user_require.reward,
+                'pub_time': user_require.pub_time,
+                'accept_user_id': user_require.answer_user,
+                'answer_users': get_answers(user_require.id),
+                'status': user_require.status,
+                'user': {
+                    'uid': user.user_id,
+                    'name': user.name,
+                    'avatar': user.avatar
+                }
+            })
+        return jsonify({'status': 100, 'data': res})
+    else:
+        return jsonify({'status': 101, 'data': '请求错误，未找到该用户的需求'})
+
+
+@app.route('/init_answer', methods=['POST'])
+def init_answer():
+    a1 = AnswerRequire(1, 1)
+    a2 = AnswerRequire(2, 2)
+    a3 = AnswerRequire(3, 3)
+    db.session.add(a1)
+    db.session.add(a2)
+    db.session.add(a3)
+    db.session.commit()
+
+    return jsonify({'status': 100})
+
+
+def get_answers(userrequire_id):
+    answers = AnswerRequire.query.filter_by(userrequire_id=userrequire_id)\
+                                 .all()
+    answer_users = []
+    for answer in answers:
+        user = Participator.query.filter_by(user_id=answer.answer_uid)\
+                                 .first()
+        answer_users.append({
+            'uid': user.user_id,
+            'name': user.name,
+            'gender': user.gender,
+            'avatar': user.avatar,
+            'answer_time': answer.answer_time,
+            'status': answer.status
+        })
+    return answer_users
