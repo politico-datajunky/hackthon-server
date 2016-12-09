@@ -154,3 +154,14 @@ class Reply(db.Model):
 
     def __repr__(self):
         return '<Reply %s>' % self.id
+
+
+class Skill(db.Model):
+    """
+        可选技能
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    skills = db.Column(db.Text)
+
+    def __init__(self, skills):
+        self.skills = skills

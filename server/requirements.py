@@ -65,6 +65,7 @@ def get_requirement():
             'avatar': user.avatar
         })
     res = {
+        'userrequire_id': user_require.id,
         'uid': user_require.user_id,
         'title': user_require.title,
         'content': user_require.content,
@@ -72,7 +73,8 @@ def get_requirement():
         'reward': user_require.reward,
         'pub_time': user_require.pub_time,
         'accept_user_id': user_require.answer_user,
-        'answer_users': answer_users
+        'answer_users': answer_users,
+        'status': user_require.status
     }
     return jsonify(res)
 
