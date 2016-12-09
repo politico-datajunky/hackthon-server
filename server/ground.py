@@ -132,30 +132,30 @@ def init_requirement():
     db.session.add(requirement5)
     db.session.commit()
 
-    apply_users1 = AnswerRequire(
-        userrequire_id=requirement1.id,
-        users_id='1|3|4'
-    )
-    apply_users2 = AnswerRequire(
-        userrequire_id=requirement2.id,
-        users_id='1|2|4'
-    )
-    apply_users3 = AnswerRequire(
-        userrequire_id=requirement3.id,
-        users_id='1|3|5'
-    )
-    apply_users4 = AnswerRequire(
-        userrequire_id=requirement4.id,
-        users_id='2|3|4'
-    )
-    apply_users5 = AnswerRequire(
-        userrequire_id=requirement5.id,
-        users_id='3|4|5'
-    )
-    db.session.add(apply_users1)
-    db.session.add(apply_users2)
-    db.session.add(apply_users3)
-    db.session.add(apply_users4)
-    db.session.add(apply_users5)
-    db.session.commit()
+    # apply_users1 = AnswerRequire(
+    #     userrequire_id=requirement1.id,
+    #     users_id='1|3|4'
+    # )
+    # apply_users2 = AnswerRequire(
+    #     userrequire_id=requirement2.id,
+    #     users_id='1|2|4'
+    # )
+    # apply_users3 = AnswerRequire(
+    #     userrequire_id=requirement3.id,
+    #     users_id='1|3|5'
+    # )
+    # apply_users4 = AnswerRequire(
+    #     userrequire_id=requirement4.id,
+    #     users_id='2|3|4'
+    # )
+    # apply_users5 = AnswerRequire(
+    #     userrequire_id=requirement5.id,
+    #     users_id='3|4|5'
+    # )
+    # db.session.add(apply_users1)
+    # db.session.add(apply_users2)
+    # db.session.add(apply_users3)
+    # db.session.add(apply_users4)
+    # db.session.add(apply_users5)
+    # db.session.commit()
     return jsonify({'status': 'success'})
