@@ -40,8 +40,23 @@ class Participator(db.Model):
     qq = db.Column(db.String(16), nullable=True)
     skills = db.Column(db.Text, nullable=True)
     free_time = db.Column(db.Text, nullable=True)
+    care_users = db.Column(db.Text, nullable=True)
+    cared_users = db.Column(db.Text, nullable=True)
 
-    def __init__(self, user_id, name=None, gender=None, avatar=None, company=None, position=None, phone=None, email=None, qq=None, skills=None, free_time=None):
+    def __init__(self,
+                 user_id,
+                 name=None,
+                 gender=None,
+                 avatar=None,
+                 company=None,
+                 position=None,
+                 phone=None,
+                 email=None,
+                 qq=None,
+                 skills=None,
+                 free_time=None,
+                 care_users=None,
+                 cared_users=None):
         self.user_id = user_id
         self.name = name
         self.gender = gender
@@ -53,6 +68,8 @@ class Participator(db.Model):
         self.qq = qq
         self.skills = skills
         self.free_time = free_time
+        self.care_users = care_users
+        self.cared_users = cared_users
 
     def __repr__(self):
         return '<Participator %r>' % self.user_id
@@ -154,14 +171,16 @@ class Reply(db.Model):
     to_user = db.Column(db.Integer, nullable=True)
     content = db.Column(db.Text, nullable=True)
     pub_time = db.Column(db.Integer)
+    watch_time = db.Column(db.Integer, nullable=True)
 
-    def __init__(self, topic_id, from_user=None, to_user=None, content=None, pub_time=None):
+    def __init__(self, topic_id, from_user=None, to_user=None, content=None, pub_time=None, watch_time=None):
         self.topic_id = topic_id
         self.from_user = from_user
         self.to_user = to_user
         self.content = content
         if pub_time is None:
             self.pub_time = int(time.time())
+        self.watch_time = watch_time
 
     def __repr__(self):
         return '<Reply %s>' % self.id

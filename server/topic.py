@@ -3,6 +3,8 @@ from flask import jsonify, request
 from server import app
 from server.models import Participator, Topic, Reply, ReplyAwesome, db
 
+import time
+
 """
     topic 相关CURD操作
 """
@@ -46,6 +48,8 @@ def topic():
     replies = Reply.query.filter_by(topic_id=topic.id)
     result = []
     for reply in replies:
+        reply.watch_time = int(time.time())
+        db.session.commit()
         user = Participator.query.filter_by(user_id=reply.from_user).first()
         awesome = ReplyAwesome.query.filter_by(reply_id=reply.id).first()
         if awesome is None:
@@ -195,15 +199,17 @@ def published_topic():
         我发表的话题列表
     """
     uid = request.form['uid']
-    topics = Topic.query.filter(user_id=uid)
+    topics = Topic.query.filter_by(user_id=uid)
     result = []
     for each in topics:
+        replies = Reply.query.filter_by(watch_time=None).first()
         result.append({
             'topicid': each.id,
             'date': each.pub_date,
             'content': each.content,
             'img': each.image.split('|') if each.image is not None else [],
-            'replynum': each.reply_number
+            'replynum': each.reply_number,
+            'readstatus': True if replies is not None else False
         })
     return jsonify({
         'publishedList': result

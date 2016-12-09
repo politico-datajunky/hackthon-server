@@ -38,6 +38,9 @@ def login():
 
 @app.route('/api/user', methods=['POST'])
 def update_user():
+    """
+        更新用户信息，只更新POST body中存在的字段
+    """
     uid = request.form['uid']
     participator = Participator.query.filter_by(user_id=uid).first()
     if participator is None:
@@ -86,6 +89,98 @@ def update_user():
             'phone': participator.phone,
             'email': participator.email,
             'qq': participator.qq
+        }
+    })
+
+
+@app.route('/api/user/care', methods=['POST'])
+def care():
+    """
+        关注用户
+    """
+    uid = int(request.form['uid'])
+    care_uid = int(request.form['care_id'])
+    user = Participator.query.filter_by(user_id=uid).first()
+    care_user = Participator.query.filter_by(user_id=care_uid).first()
+    if user is None or care_user is None:
+        return jsonify({
+            'status': 110,
+            'error': 'uid wrrong!'
+        })
+    if user.care_users is None:
+        user.care_users = str(care_uid)
+    else:
+        user.care_users += '|' + str(care_uid)
+    if care_user.cared_users is None:
+        care_user.cared_users = str(uid)
+    else:
+        care_user.cared_users += '|' + str(uid)
+    db.session.commit()
+    result = []
+    for care_user in user.care_users.split('|'):
+        someone = Participator.query.filter_by(user_id=care_user).first()
+        result.append({
+            'uid': someone.user_id,
+            'name': someone.name,
+            'avatar': someone.avatar
+        })
+    return jsonify({
+        'status': 100,
+        'care_list': result
+    })
+
+
+@app.route('/api/user/carelist', methods=['POST'])
+def carelist():
+    """
+        获取用户关注列表
+    """
+    uid = request.form['uid']
+    user = Participator.query.filter_by(user_id=uid).first()
+    if user is None:
+        return jsonify({
+            'status': 110,
+            'error': 'uid wrrong!'
+        })
+    result = []
+    if user.care_users is not None:
+        for care_user in user.care_users.split('|'):
+            someone = Participator.query.filter_by(user_id=care_user).first()
+            result.append({
+                'uid': someone.user_id,
+                'name': someone.name,
+                'avatar': someone.avatar
+            })
+    return jsonify({
+        'status': 100,
+        'care_list': result
+    })
+
+
+@app.route('/api/userdetail', methods=['POST'])
+def user_detail():
+    uid = request.form['uid']
+    request_userid = request.form['detail_userid']
+    user = Participator.query.filter_by(user_id=request_userid).first()
+    if user is None:
+        return jsonify({
+            'status': 110,
+            'error': 'uid wrrong!'
+        })
+    return jsonify({
+        'status': 100,
+        'userinfo': {
+            'uid': user.user_id,
+            'username': user.name,
+            'gender': user.gender,
+            'avatar': user.avatar,
+            'company': user.company,
+            'position': user.position,
+            'skills': user.skills.split('|'),
+            'free_time': user.free_time,
+            'phone': user.phone,
+            'email': user.email,
+            'qq': user.qq
         }
     })
 
