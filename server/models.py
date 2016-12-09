@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __init__ import app
+from server import app
 from flask_sqlalchemy import SQLAlchemy
 
 import time
@@ -9,7 +9,7 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.Integer, unique=True)
+    username = db.Column(db.String(32), unique=True)
     password = db.Column(db.String(256))
 
     def __init__(self, username, password):
@@ -51,6 +51,9 @@ class Participator(db.Model):
 
 
 class UserRequire(db.Model):
+    WAITING = 0
+    ANSWERED = 1
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     title = db.Column(db.Text, nullable=True)
@@ -69,6 +72,8 @@ class UserRequire(db.Model):
         self.reward = reward
         if pub_time is None:
             self.pub_time = int(time.time()*1000)
+        else:
+            self.pub_time = pub_time
         self.status = status
         self.answer_user = answer_user
 

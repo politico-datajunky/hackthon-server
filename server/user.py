@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import jsonify, request
 from server import app
+from server.models import db
 from server.models import User, Participator
 
 

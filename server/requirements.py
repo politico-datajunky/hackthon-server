@@ -1,50 +1,90 @@
 # coding: utf-8
-
 from flask import jsonify, request
 from server import app
+from server.models import db, UserRequire, AnswerRequire, Participator
 
 @app.route('/create_requirement', methods=['POST'])
 def create_requirement():
-    uid = request.form['uid']
-    content = request.form['content']
-    require = request.form['require']
-    reward = request.form['reward']
-    time = request.form['time']
-    print request.form
+    uid = request.form.get('uid', '')
+    title = request.form.get('title', '')
+    content = request.form.get('content', '')
+    condition = request.form.get('condition', '')
+    pub_time = request.form.get('pub_time', '')
+    reward = request.form.get('reward', '')
 
-    # todo: 插入数据库，成功，失败
+    user_require = UserRequire(uid, title, content, condition, reward, pub_time)
+    db.session.add(user_require)
+    db.session.commit()
 
-    return jsonify({'status': 100})
+    res = {
+        'userrequire_id': user_require.id
+    }
+    return jsonify(res)
 
 
-@app.route('/bid_requirement', methods=['POST'])
-def bid_requirement():
-    uid = request.form['uid']
-    requirement_id = request.form['requirement_id']
+@app.route('/answer_requirement', methods=['POST'])
+def answer_requirement():
+    uid = request.form.get('uid', '')
+    userrequire_id = request.form.get('userrequire_id', '')
 
-    # todo: 查数据库status判断该单是否已经被抢，若没被抢，
-
-    return jsonify({'status': 100})
+    require_status = UserRequire.query.get(userrequire_id).status
+    if require_status == UserRequire.WAITING:
+        answer_require = AnswerRequire.query\
+                                      .filter_by(userrequire_id=userrequire_id)\
+                                      .first()
+        if answer_require:
+            users_id = answer_require.users_id + ' ' + str(uid)
+            answer_require.users_id = users_id
+            db.session.commit()
+        else:
+            answer_require = AnswerRequire(userrequire_id, str(uid))
+            db.session.add(answer_require)
+            db.session.commit()
+        res = {'status': 100, 'msg': '请等待需求发布者接单'}
+    else:
+        res = {'status': 101, 'msg': '单已被抢'}
+    return jsonify(res)
 
 
 @app.route('/get_requirement', methods=['POST'])
 def get_requirement():
-    uid = request.form['uid']
-    requirement_id = request.form['requirement_id']
+    userrequire_id = request.form.get('userrequire_id', '')
+    user_require = UserRequire.query.get(userrequire_id)
 
-    # todo: get需求对象，解析成json返回
-
+    answer_user_ids = AnswerRequire.query.filter_by(userrequire_id=userrequire_id)\
+                                         .first()\
+                                         .users_id\
+                                         .split(' ')
+    answer_users = []
+    for uid in answer_user_ids:
+        user = Participator.query.filter_by(user_id=uid).first()
+        answer_users.append({
+            'uid': uid,
+            'name': user.name,
+            'gender': user.gender,
+            'avatar': user.avatar
+        })
     res = {
-        'uid': 100,
-        'content': '我想学java',
-        'require': ['java', 'php'],
-        'reward': '请吃饭',
-        'time': '20161208 00:00:00'
+        'uid': user_require.user_id,
+        'title': user_require.title,
+        'content': user_require.content,
+        'condition': user_require.condition,
+        'reward': user_require.reward,
+        'pub_time': user_require.pub_time,
+        'accept_user_id': user_require.answer_user,
+        'answer_users': answer_users
     }
     return jsonify(res)
 
-@app.route('/accept_bidder', methods=['POST'])
-def accept_bidder():
-    uid = request.form['uid']
-    requirement_id = request.form['requirement_id']
+@app.route('/accept_answer', methods=['POST'])
+def accept_answer():
+    answer_user_id = request.form.get('answer_user_id', '')
+    userrequire_id = request.form.get('userrequire_id', '')
+
+    user_require = UserRequire.query.get(userrequire_id)
+    user_require.answer_user = answer_user_id
+    user_require.status = UserRequire.ANSWERED
+    db.session.commit()
+
+    return jsonify({'status': 100})
 
