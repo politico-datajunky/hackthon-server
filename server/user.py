@@ -64,12 +64,10 @@ def update_user():
     if 'qq' in body:
         participator.qq = request.form['qq']
     if 'skills' in body:
-        if len(request.form['skills']) == 1:
-            participator.skills = request.form['skills'][0]
-        elif len(request.form['skills']) == 0:
+        if len(request.form['skills']) == 0:
             participator.skills = None
         else:
-            participator.skills = '&'.join(request.form['skills'])
+            participator.skills = request.form['skills']
     if 'free_time' in body:
         participator.free_time = request.form['free_time']
     if 'avatar' in body:
@@ -107,11 +105,11 @@ def care():
             'status': 110,
             'error': 'uid wrrong!'
         })
-    if user.care_users is None:
+    if not user.care_users:
         user.care_users = str(care_uid)
     else:
         user.care_users += '|' + str(care_uid)
-    if care_user.cared_users is None:
+    if not care_user.cared_users:
         care_user.cared_users = str(uid)
     else:
         care_user.cared_users += '|' + str(uid)
@@ -143,7 +141,7 @@ def carelist():
             'error': 'uid wrrong!'
         })
     result = []
-    if user.care_users is not None:
+    if user.care_users:
         for care_user in user.care_users.split('|'):
             someone = Participator.query.filter_by(user_id=care_user).first()
             result.append({
@@ -176,13 +174,38 @@ def user_detail():
             'avatar': user.avatar,
             'company': user.company,
             'position': user.position,
-            'skills': user.skills.split('|'),
+            'skills': user.skills.split('|') if user.skills is not None else [],
             'free_time': user.free_time,
             'phone': user.phone,
             'email': user.email,
-            'qq': user.qq
+            'qq': user.qq,
+            'is_care': uid in user.cared_users if user.cared_users is not None else False
         }
     })
+
+
+@app.route('/api/user/cancel', methods=['POST'])
+def cancel_care():
+    """
+        取消关注
+    """
+    uid = request.form['uid']
+    care_userid = request.form['care_id']
+    user = Participator.query.filter_by(user_id=uid).first()
+
+    if user.care_users:
+        users = user.care_users.split('|')
+        if care_userid in users:
+            users.remove(care_userid)
+        user.care_users = '|'.join(users)
+    care_user = Participator.query.filter_by(user_id=care_userid).first()
+    if care_user.cared_users:
+        users = care_user.cared_users.split('|')
+        if uid in users:
+            users.remove(uid)
+        care_user.cared_users = '|'.join(users)
+    db.session.commit()
+    return jsonify({'status': 100})
 
 
 @app.route('/init_user', methods=['POST'])

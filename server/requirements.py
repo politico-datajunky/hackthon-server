@@ -3,6 +3,8 @@ from flask import jsonify, request
 from server import app
 from server.models import db, UserRequire, AnswerRequire, Participator
 
+import time
+
 
 @app.route('/api/create_requirement', methods=['POST'])
 def create_requirement():
@@ -27,8 +29,11 @@ def answer_requirement():
     uid = request.form.get('uid', '')
     userrequire_id = request.form.get('requirement_id', '')
     requirement = UserRequire.query.get(userrequire_id)
-    requirement.watch_status = 0
+    requirement.watch_time = None
     require_status = requirement.status
+    answer = AnswerRequire.query.filter_by(userrequire_id=requirement.id, answer_uid=uid).first()
+    if answer is None:
+        return jsonify({'status': 112})
     if require_status == UserRequire.WAITING:
         answer = AnswerRequire(userrequire_id, uid, AnswerRequire.WAITING)
         db.session.add(answer)
@@ -42,11 +47,12 @@ def answer_requirement():
 @app.route('/api/get_requirement', methods=['POST'])
 def get_requirement():
     userrequire_id = request.form.get('requirement_id', '')
-    watch_time = request.form.get('watch_time', '')
     user_require = UserRequire.query.get(userrequire_id)
     if user_require:
-        user_require.watch_time = watch_time
-        db.session.commit()
+        answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id)
+        for answer in answers:
+            answer.watch_time = int(time.time())
+            db.session.commit()
         publish_user = Participator.query.filter_by(user_id=user_require.user_id)\
                                          .first()
         answer_users = get_answers(user_require.id)

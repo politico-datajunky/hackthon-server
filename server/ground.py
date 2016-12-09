@@ -50,42 +50,42 @@ def ground_list():
     })
 
 
-@app.route('/ground/search', methods=['POST'])
+@app.route('/api/ground/search', methods=['POST'])
 def ground_search():
     """
         广场搜索
     """
+    uid = request.form['uid']
     body = dict(request.form).keys()
     requires = UserRequire.query.all()
-    if 'uid' in body:
-        requires = UserRequire.query.filter_by(user_id=request.form['uid'])
+    if 'user_id' in body:
+        requires = UserRequire.query.filter_by(user_id=request.form['user_id'])
     if 'skill' in body:
         requires = UserRequire.query.filter(UserRequire.condition.like('%'+request.form['skill']+'%'))
     results = []
     for each in requires:
-        participator = Participator.query.filter_by(user_id=each.user_id).first()
-        apply_users = AnswerRequire.query.filter_by(userrequire_id=each.id).first()
-
-        if apply_users is None:
-            apply_users = []
-        else:
-            users = apply_users.users_id.split('|')
-            users = Participator.query.filter(Participator.user_id.in_(users))
-            apply_users = []
-            for user in users:
-                apply_users.append({'uid': user.user_id, 'name': user.name})
+        apply_answers = []
+        require_user = Participator.query.filter_by(user_id=each.user_id).first()
+        answers = AnswerRequire.query.filter_by(userrequire_id=each.id)
+        for answer in answers:
+            user = Participator.query.filter_by(user_id=answer.answer_uid).first()
+            apply_answers.append({
+                'uid': answer.answer_uid,
+                'name': user.name,
+                'avatar': user.avatar
+            })
         results.append({
             'uid': each.user_id,
-            'user_name': participator.name,
-            'user_avatar': participator.avatar,
-            'title': each.title,
+            'user_name': require_user.name,
+            'user_avatar': require_user.avatar,
+            'require_id': each.id,
             'content': each.content,
             'condition': each.condition,
             'reward': each.reward,
             'pub_time': each.pub_time,
             'status': each.status,
             'answer_user': each.answer_user,
-            'apply_users': apply_users
+            'apply_users': apply_answers
         })
     return jsonify({'requirements': results})
 
@@ -140,7 +140,7 @@ def init_requirement():
     db.session.add(requirement4)
     db.session.add(requirement5)
     db.session.commit()
-    
+
     apply_users1 = AnswerRequire(
         userrequire_id=requirement1.id,
         answer_uid=2,
