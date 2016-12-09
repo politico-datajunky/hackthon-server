@@ -17,7 +17,7 @@ def create_requirement():
     db.session.commit()
 
     res = {
-        'userrequire_id': user_require.id
+        'requirement_id': user_require.id
     }
     return jsonify(res)
 
@@ -25,7 +25,7 @@ def create_requirement():
 @app.route('/answer_requirement', methods=['POST'])
 def answer_requirement():
     uid = request.form.get('uid', '')
-    userrequire_id = request.form.get('userrequire_id', '')
+    userrequire_id = request.form.get('requirement_id', '')
 
     require_status = UserRequire.query.get(userrequire_id).status
     if require_status == UserRequire.WAITING:
@@ -48,40 +48,43 @@ def answer_requirement():
 
 @app.route('/get_requirement', methods=['POST'])
 def get_requirement():
-    userrequire_id = request.form.get('userrequire_id', '')
+    userrequire_id = request.form.get('requirement_id', '')
     user_require = UserRequire.query.get(userrequire_id)
+    if user_require:
+        answer_user_ids = AnswerRequire.query.filter_by(userrequire_id=userrequire_id)\
+                                             .first()\
+                                             .users_id\
+                                             .split(' ')
+        answer_users = []
+        for uid in answer_user_ids:
+            user = Participator.query.filter_by(user_id=uid).first()
+            answer_users.append({
+                'uid': uid,
+                'name': user.name,
+                'gender': user.gender,
+                'avatar': user.avatar
+            })
+        res = {
+            'requirement_id': user_require.id,
+            'uid': user_require.user_id,
+            'title': user_require.title,
+            'content': user_require.content,
+            'condition': user_require.condition,
+            'reward': user_require.reward,
+            'pub_time': user_require.pub_time,
+            'accept_user_id': user_require.answer_user,
+            'answer_users': answer_users,
+            'status': user_require.status
+        }
+        return jsonify({'data': res})
+    else:
+        return jsonify({'status': 101, 'msg': '需求id错误'})
 
-    answer_user_ids = AnswerRequire.query.filter_by(userrequire_id=userrequire_id)\
-                                         .first()\
-                                         .users_id\
-                                         .split(' ')
-    answer_users = []
-    for uid in answer_user_ids:
-        user = Participator.query.filter_by(user_id=uid).first()
-        answer_users.append({
-            'uid': uid,
-            'name': user.name,
-            'gender': user.gender,
-            'avatar': user.avatar
-        })
-    res = {
-        'userrequire_id': user_require.id,
-        'uid': user_require.user_id,
-        'title': user_require.title,
-        'content': user_require.content,
-        'condition': user_require.condition,
-        'reward': user_require.reward,
-        'pub_time': user_require.pub_time,
-        'accept_user_id': user_require.answer_user,
-        'answer_users': answer_users,
-        'status': user_require.status
-    }
-    return jsonify(res)
 
 @app.route('/accept_answer', methods=['POST'])
 def accept_answer():
     answer_user_id = request.form.get('answer_user_id', '')
-    userrequire_id = request.form.get('userrequire_id', '')
+    userrequire_id = request.form.get('requirement_id', '')
 
     user_require = UserRequire.query.get(userrequire_id)
     user_require.answer_user = answer_user_id
@@ -90,3 +93,12 @@ def accept_answer():
 
     return jsonify({'status': 100})
 
+
+@app.route('/my_requirements', methods=['POST'])
+def my_requirements():
+    uid = request.form.get('uid', '')
+    requirement = UserRequire.query.filter_by(user_id=uid).first()
+    if requirement:
+        pass
+    else:
+        pass
