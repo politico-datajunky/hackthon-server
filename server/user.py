@@ -6,7 +6,7 @@ from server.models import User, Participator, db
 # from werkzeug import secure_filename
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     """
         输入：用户名、密码
@@ -36,15 +36,16 @@ def login():
     })
 
 
-@app.route('/user/<uid>', methods=['POST'])
-def update_user(uid):
+@app.route('/api/user', methods=['POST'])
+def update_user():
+    uid = request.form['uid']
     participator = Participator.query.filter_by(user_id=uid).first()
     if participator is None:
         return jsonify({
             'status': 119,
             'error': 'uid wrrong!'
         })
-    body = dict(request.form).keys()
+    body = dict(request.form)
     if 'name' in body:
         participator.name = request.form['name']
     if 'gender' in body:
@@ -58,20 +59,35 @@ def update_user(uid):
     if 'email' in body:
         participator.email = request.form['email']
     if 'qq' in body:
-        participator.email = request.form['qq']
+        participator.qq = request.form['qq']
     if 'skills' in body:
-        participator.email = request.form['skills']
+        if len(request.form['skills']) == 1:
+            participator.skills = request.form['skills'][0]
+        elif len(request.form['skills']) == 0:
+            participator.skills = None
+        else:
+            participator.skills = '&'.join(request.form['skills'])
     if 'free_time' in body:
-        participator.email = request.form['free_time']
-    # file = request.files['avatar']
-    # if file and '.' in file.filename and file.filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']:
-    #     filename = secure_filename(file.filename)
-    #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    # participator.avatar = file.filename
-    # print request.files['avatar']
+        participator.free_time = request.form['free_time']
+    if 'avatar' in body:
+        participator.avatar = request.form['avatar']
     db.session.commit()
-    print participator.__dict__
-    return jsonify({'status': 100})
+    return jsonify({
+        'status': 100,
+        'userinfo': {
+            'uid': participator.user_id,
+            'username': participator.name,
+            'gender': participator.gender,
+            'avatar': participator.avatar,
+            'company': participator.company,
+            'position': participator.position,
+            'skills': participator.skills.split('|'),
+            'free_time': participator.free_time,
+            'phone': participator.phone,
+            'email': participator.email,
+            'qq': participator.qq
+        }
+    })
 
 
 @app.route('/init_user', methods=['POST'])

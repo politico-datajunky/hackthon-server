@@ -121,7 +121,7 @@ class Topic(db.Model):
         self.content = content,
         self.image = image,
         if pub_date is None:
-            self.pub_date = int(time.time() * 1000)
+            self.pub_date = int(time.time())
         self.reply_number = reply_number
 
     def __repr__(self):
@@ -145,7 +145,27 @@ class Reply(db.Model):
         self.to_user = to_user
         self.content = content
         if pub_time is None:
-            self.pub_time = int(time.time()*1000)
+            self.pub_time = int(time.time())
 
     def __repr__(self):
         return '<Reply %s>' % self.id
+
+
+class ReplyAwesome(db.Model):
+    """
+        话题或者回复的赞
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    topic_id = db.Column(db.Integer, nullable=True)
+    reply_id = db.Column(db.Integer, nullable=True)
+    awesome_number = db.Column(db.Integer, default=1)
+    awesome_user = db.Column(db.Text, nullable=True)
+
+    def __init__(self, topic_id=None, reply_id=None, awesome_number=1, awesome_user=None):
+        self.topic_id = topic_id
+        self.reply_id = reply_id
+        self.awesome_number = awesome_number
+        self.awesome_user = awesome_user
+
+    def __repr__(self):
+        return '<ReplyAwesome %d>' % self.id
