@@ -3,6 +3,7 @@ from flask import jsonify, request
 from server import app
 from server.models import db, UserRequire, AnswerRequire, Participator
 
+
 @app.route('/api/create_requirement', methods=['POST'])
 def create_requirement():
     uid = request.form.get('uid', '')
@@ -25,8 +26,9 @@ def create_requirement():
 def answer_requirement():
     uid = request.form.get('uid', '')
     userrequire_id = request.form.get('requirement_id', '')
-
-    require_status = UserRequire.query.get(userrequire_id).status
+    requirement = UserRequire.query.get(userrequire_id)
+    requirement.watch_status = 0
+    require_status = requirement.status
     if require_status == UserRequire.WAITING:
         answer = AnswerRequire(userrequire_id, uid, AnswerRequire.WAITING)
         db.session.add(answer)
@@ -40,10 +42,14 @@ def answer_requirement():
 @app.route('/api/get_requirement', methods=['POST'])
 def get_requirement():
     userrequire_id = request.form.get('requirement_id', '')
+    watch_time = request.form.get('watch_time', '')
     user_require = UserRequire.query.get(userrequire_id)
     if user_require:
+        user_require.watch_time = watch_time
+        db.session.commit()
         publish_user = Participator.query.filter_by(user_id=user_require.user_id)\
                                          .first()
+        answer_users = get_answers(user_require.id)
         res = {
             'requirement_id': user_require.id,
             'uid': user_require.user_id,
@@ -53,7 +59,7 @@ def get_requirement():
             'reward': user_require.reward,
             'pub_time': user_require.pub_time,
             'accept_user_id': user_require.answer_user,
-            'answer_users': get_answers(user_require.id),
+            'answer_users': answer_users,
             'status': user_require.status,
             'publish_user': {
                 'uid': publish_user.user_id,
@@ -78,6 +84,7 @@ def accept_answer():
     answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id)\
                                  .all()
     for answer in answers:
+        answer.watch_time = 0
         if int(answer.answer_uid) == int(answer_user_id):
             answer.status = AnswerRequire.SUCCESS
         else:
@@ -90,31 +97,111 @@ def accept_answer():
 def my_requirements():
     uid = request.form.get('uid', '')
     requirements = UserRequire.query.filter_by(user_id=uid).all()
-    res = []
+    user = Participator.query.filter_by(user_id=int(uid))\
+                             .first()
+    data = {'user': {
+        'uid': user.user_id,
+        'name': user.name,
+        'avatar': user.avatar
+    }}
+    needlist = []
     if requirements:
         for user_require in requirements:
-            user = Participator.query.filter_by(user_id=user_require.user_id)\
-                                     .first()
-            res.append({
-                'requirement_id': user_require.id,
-                'uid': user_require.user_id,
-                'title': user_require.title,
+            needlist.append({
+                'needid': user_require.id,
                 'content': user_require.content,
-                'condition': user_require.condition,
+                'need': user_require.condition,
                 'reward': user_require.reward,
                 'pub_time': user_require.pub_time,
                 'accept_user_id': user_require.answer_user,
                 'answer_users': get_answers(user_require.id),
                 'status': user_require.status,
-                'user': {
-                    'uid': user.user_id,
-                    'name': user.name,
-                    'avatar': user.avatar
-                }
+                'watch_status':  False if user_require.watch_time else True
             })
-        return jsonify({'status': 100, 'data': res})
+
+        data['needlist'] = needlist
+        return jsonify({'status': 100, 'data': data})
     else:
         return jsonify({'status': 101, 'data': '请求错误，未找到该用户的需求'})
+
+
+@app.route('/api/my_answers', methods=['POST'])
+def my_answers():
+    uid = request.form.get('uid', '')
+    watch_time = request.form.get('watch_time', '')
+    answers = AnswerRequire.query.filter_by(answer_uid=int(uid))\
+                                 .order_by('answer_time desc')\
+                                 .all()
+    if answers:
+        answer_list = []
+        for answer in answers:
+            origin_watch_time = answer.watch_time
+            if answer.status != AnswerRequire.WAITING:
+                answer.watch_time = int(watch_time)
+                db.session.commit()
+                requirement = UserRequire.query.filter_by(id=answer.userrequire_id)\
+                                               .first()
+                require_user = Participator.query.filter_by(user_id=requirement.user_id)\
+                                                 .first()
+                row = {
+                    'user':
+                        {
+                            'uid': require_user.user_id,
+                            'name': require_user.name,
+                            'avatar': require_user.avatar,
+                            'gender': require_user.gender
+                        },
+                        'answer_time': answer.answer_time,
+                        'publish_time': requirement.pub_time,
+                        'status': answer.status,
+                        'content': requirement.content,
+                        'reward': requirement.reward,
+                        'need': requirement.condition,
+                        'watch_status': False if origin_watch_time else True
+                }
+                answer_list.append(row)
+                return jsonify({
+                    'status': 100,
+                    'data': {
+                        'answer_list': answer_list,
+                    }
+                })
+            else:
+                return jsonify({
+                    'status': 101,
+                    'data': '没有您的抢单'
+                })
+
+    else:
+        return jsonify({
+            'status': 101,
+            'data': '没有您的抢单'
+        })
+
+
+@app.route('/my', methods=['POST'])
+def my():
+    uid = int(request.form.get('uid', ''))
+    res = {
+        'require': False,
+        'answer': False
+    }
+    requiremets = UserRequire.query.filter_by(user_id=uid).all()
+    answers = AnswerRequire.query.filter_by(answer_uid=uid).all()
+
+    for require in requiremets:
+        if not require.watch_time:
+            res['require'] = True
+            break
+    for answer in answers:
+        if not answer.watch_time:
+            res['answer'] = True
+            break
+
+    return jsonify({
+        'status': 100,
+        'data': res
+    })
 
 
 @app.route('/init_answer', methods=['POST'])

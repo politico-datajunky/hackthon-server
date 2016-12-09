@@ -140,7 +140,7 @@ def init_requirement():
     db.session.add(requirement4)
     db.session.add(requirement5)
     db.session.commit()
-
+    
     apply_users1 = AnswerRequire(
         userrequire_id=requirement1.id,
         answer_uid=2,
@@ -174,4 +174,5 @@ def init_requirement():
     db.session.add(apply_users4)
     db.session.add(apply_users5)
     db.session.commit()
+
     return jsonify({'status': 'success'})

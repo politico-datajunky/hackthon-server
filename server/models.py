@@ -93,8 +93,10 @@ class UserRequire(db.Model):
     pub_time = db.Column(db.Integer)
     status = db.Column(db.Integer, default=0)
     answer_user = db.Column(db.Integer, nullable=True)
+    watch_time = db.Column(db.Integer, nullable=True)
 
-    def __init__(self, user_id, title, content, condition, reward, pub_time=None, status=0, answer_user=None):
+    def __init__(self, user_id, title, content, condition, reward,
+                 pub_time=None, status=0, answer_user=None):
         self.user_id = user_id
         self.title = title
         self.content = content
@@ -124,6 +126,7 @@ class AnswerRequire(db.Model):
     answer_uid = db.Column(db.Integer)
     answer_time = db.Column(db.Integer)
     status = db.Column(db.Integer)
+    watch_time = db.Column(db.Integer, nullable=True)
 
     def __init__(self, userrequire_id, answer_uid, status=0, answer_time=None):
         self.userrequire_id = userrequire_id
