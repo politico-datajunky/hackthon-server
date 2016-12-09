@@ -3,67 +3,47 @@ from flask import jsonify, request
 from server import app
 from server.models import db, UserRequire, AnswerRequire, Participator
 
-@app.route('/create_requirement', methods=['POST'])
+@app.route('/api/create_requirement', methods=['POST'])
 def create_requirement():
     uid = request.form.get('uid', '')
     title = request.form.get('title', '')
     content = request.form.get('content', '')
     condition = request.form.get('condition', '')
-    pub_time = request.form.get('pub_time', '')
     reward = request.form.get('reward', '')
 
-    user_require = UserRequire(uid, title, content, condition, reward, pub_time)
+    user_require = UserRequire(uid, title, content, condition, reward)
     db.session.add(user_require)
     db.session.commit()
 
     res = {
         'requirement_id': user_require.id
     }
-    return jsonify(res)
+    return jsonify({'status': 100, 'data': res})
 
 
-@app.route('/answer_requirement', methods=['POST'])
+@app.route('/api/answer_requirement', methods=['POST'])
 def answer_requirement():
     uid = request.form.get('uid', '')
     userrequire_id = request.form.get('requirement_id', '')
 
     require_status = UserRequire.query.get(userrequire_id).status
     if require_status == UserRequire.WAITING:
-        answer_require = AnswerRequire.query\
-                                      .filter_by(userrequire_id=userrequire_id)\
-                                      .first()
-        if answer_require:
-            users_id = answer_require.users_id + ' ' + str(uid)
-            answer_require.users_id = users_id
-            db.session.commit()
-        else:
-            answer_require = AnswerRequire(userrequire_id, str(uid))
-            db.session.add(answer_require)
-            db.session.commit()
-        res = {'status': 100, 'msg': '请等待需求发布者接单'}
+        answer = AnswerRequire(userrequire_id, uid, AnswerRequire.WAITING)
+        db.session.add(answer)
+        db.session.commit()
+        res = {'status': 100, 'data': '请等待需求发布者接单'}
     else:
-        res = {'status': 101, 'msg': '单已被抢'}
+        res = {'status': 101, 'data': '单已被抢'}
     return jsonify(res)
 
 
-@app.route('/get_requirement', methods=['POST'])
+@app.route('/api/get_requirement', methods=['POST'])
 def get_requirement():
     userrequire_id = request.form.get('requirement_id', '')
     user_require = UserRequire.query.get(userrequire_id)
     if user_require:
-        answer_user_ids = AnswerRequire.query.filter_by(userrequire_id=userrequire_id)\
-                                             .first()\
-                                             .users_id\
-                                             .split(' ')
-        answer_users = []
-        for uid in answer_user_ids:
-            user = Participator.query.filter_by(user_id=uid).first()
-            answer_users.append({
-                'uid': uid,
-                'name': user.name,
-                'gender': user.gender,
-                'avatar': user.avatar
-            })
+        publish_user = Participator.query.filter_by(user_id=user_require.user_id)\
+                                         .first()
         res = {
             'requirement_id': user_require.id,
             'uid': user_require.user_id,
@@ -73,15 +53,20 @@ def get_requirement():
             'reward': user_require.reward,
             'pub_time': user_require.pub_time,
             'accept_user_id': user_require.answer_user,
-            'answer_users': answer_users,
-            'status': user_require.status
+            'answer_users': get_answers(user_require.id),
+            'status': user_require.status,
+            'publish_user': {
+                'uid': publish_user.user_id,
+                'name': publish_user.name,
+                'avatar': publish_user.avatar,
+            }
         }
-        return jsonify({'data': res})
+        return jsonify({'status': 100, 'data': res})
     else:
-        return jsonify({'status': 101, 'msg': '需求id错误'})
+        return jsonify({'status': 101, 'data': '需求id错误'})
 
 
-@app.route('/accept_answer', methods=['POST'])
+@app.route('/api/accept_answer', methods=['POST'])
 def accept_answer():
     answer_user_id = request.form.get('answer_user_id', '')
     userrequire_id = request.form.get('requirement_id', '')
@@ -89,16 +74,75 @@ def accept_answer():
     user_require = UserRequire.query.get(userrequire_id)
     user_require.answer_user = answer_user_id
     user_require.status = UserRequire.ANSWERED
+
+    answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id)\
+                                 .all()
+    for answer in answers:
+        if int(answer.answer_uid) == int(answer_user_id):
+            answer.status = AnswerRequire.SUCCESS
+        else:
+            answer.status = AnswerRequire.FAILURE
+    db.session.commit()
+    return jsonify({'status': 100})
+
+
+@app.route('/api/my_requirements', methods=['POST'])
+def my_requirements():
+    uid = request.form.get('uid', '')
+    requirements = UserRequire.query.filter_by(user_id=uid).all()
+    res = []
+    if requirements:
+        for user_require in requirements:
+            user = Participator.query.filter_by(user_id=user_require.user_id)\
+                                     .first()
+            res.append({
+                'requirement_id': user_require.id,
+                'uid': user_require.user_id,
+                'title': user_require.title,
+                'content': user_require.content,
+                'condition': user_require.condition,
+                'reward': user_require.reward,
+                'pub_time': user_require.pub_time,
+                'accept_user_id': user_require.answer_user,
+                'answer_users': get_answers(user_require.id),
+                'status': user_require.status,
+                'user': {
+                    'uid': user.user_id,
+                    'name': user.name,
+                    'avatar': user.avatar
+                }
+            })
+        return jsonify({'status': 100, 'data': res})
+    else:
+        return jsonify({'status': 101, 'data': '请求错误，未找到该用户的需求'})
+
+
+@app.route('/init_answer', methods=['POST'])
+def init_answer():
+    a1 = AnswerRequire(1, 1)
+    a2 = AnswerRequire(2, 2)
+    a3 = AnswerRequire(3, 3)
+    db.session.add(a1)
+    db.session.add(a2)
+    db.session.add(a3)
     db.session.commit()
 
     return jsonify({'status': 100})
 
 
-@app.route('/my_requirements', methods=['POST'])
-def my_requirements():
-    uid = request.form.get('uid', '')
-    requirement = UserRequire.query.filter_by(user_id=uid).first()
-    if requirement:
-        pass
-    else:
-        pass
+def get_answers(userrequire_id):
+    answers = AnswerRequire.query.filter_by(userrequire_id=userrequire_id)\
+                                 .all()
+    answer_users = []
+    for answer in answers:
+        user = Participator.query.filter_by(user_id=answer.answer_uid)\
+                                 .first()
+        answer_users.append({
+            'uid': user.user_id,
+            'name': user.name,
+            'gender': user.gender,
+            'avatar': user.avatar,
+            'answer_time': answer.answer_time,
+            'status': answer.status
+        })
+    return answer_users

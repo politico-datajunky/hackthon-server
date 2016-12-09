@@ -7,7 +7,7 @@ from server import app
 from server.models import Participator, Skill
 
 
-@app.route('/discover_home', methods=['POST'])
+@app.route('/api/discover_home', methods=['POST'])
 def discover_home():
     user_num = Participator.query.count()
     uids = random.sample(xrange(1, user_num), 4)
@@ -37,9 +37,10 @@ def discover_home():
         'hot': hot,
         'recommend': recommend
     }
-    return jsonify(res)
+    return jsonify({'status': 100, 'data': res})
 
-@app.route('/discover_search', methods=['POST'])
+
+@app.route('/api/discover_search', methods=['POST'])
 def discover_search():
     skill = request.form.get('skill', '')
 
@@ -67,4 +68,7 @@ def discover_search():
                         'skills': user_skills
                     })
                     break
-    return jsonify({'res': res})
+    if res:
+        return jsonify({'status': 100, 'data': res})
+    else:
+        return jsonify({'status': 101, 'data': '未找到相关结果'})

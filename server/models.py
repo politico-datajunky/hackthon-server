@@ -73,7 +73,7 @@ class UserRequire(db.Model):
     content = db.Column(db.Text, nullable=True)
     condition = db.Column(db.Text, nullable=True)
     reward = db.Column(db.String(256), nullable=True)
-    pub_time = db.Column(db.Integer)
+    pub_time = db.Column(db.String(20))
     status = db.Column(db.Integer, default=0)
     answer_user = db.Column(db.Integer, nullable=True)
 
@@ -97,14 +97,25 @@ class UserRequire(db.Model):
 class AnswerRequire(db.Model):
     """
         需求抢单表 存储需求的抢单用户
-        users_id存储抢单用户的uid 以|分隔
     """
-    userrequire_id = db.Column(db.Integer, primary_key=True)
-    users_id = db.Column(db.Text)
+    WAITING = 0
+    SUCCESS = 1
+    FAILURE = 2
 
-    def __init__(self, userrequire_id, users_id):
+    id = db.Column(db.Integer, primary_key=True)
+    userrequire_id = db.Column(db.Integer)
+    answer_uid = db.Column(db.Integer)
+    answer_time = db.Column(db.String(20))
+    status = db.Column(db.Integer)
+
+    def __init__(self, userrequire_id, answer_uid, status=0, answer_time=None):
         self.userrequire_id = userrequire_id
-        self.users_id = users_id
+        self.answer_uid = answer_uid
+        self.status = status
+        if answer_time is None:
+            self.answer_time = int(time.time()*1000)
+        else:
+            self.answer_time = answer_time
 
     def __repr__(self):
         return '<AnswerRequire %s>' % self.userrequire_id
