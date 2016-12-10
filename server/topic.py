@@ -15,22 +15,15 @@ def create_topic():
     """
         创建话题，返回话题详情
     """
-    participator = Participator.query.filter_by(user_id=int(request.form['uid']))
-    image = ""
     topic = Topic(
         user_id=request.form['uid'],
         content=request.form['content'],
-        image=image
+        image=request.form['image']
     )
+    db.session.add(topic)
+    db.session.commit()
     return jsonify({
-        'topic_id': topic.id,
-        'uid': topic.user_id,
-        'name': participator.name,
-        'avatar': participator.avatar,
-        'content': topic.content,
-        'image': topic.image,
-        'time': topic.pub_date,
-        'reply_number': topic.reply_number
+        'status': 100
     })
 
 
@@ -59,7 +52,7 @@ def topic():
         if awesome is None:
             ifawesomed = False
         else:
-            if user.name in awesome.awesome_user:
+            if str(user.user_id) in awesome.awesome_user:
                 ifawesomed = True
             else:
                 ifawesomed = False
@@ -174,7 +167,6 @@ def replied_topic():
         else:
             awesomenum = awesome.awesome_number
         topic = Topic.query.filter_by(id=reply.topic_id).first()
-        print topic.user_id
         user = Participator.query.filter_by(user_id=topic.user_id).first()
         result.append({
             'date': reply.pub_time,

@@ -32,7 +32,7 @@ def answer_requirement():
     requirement.watch_time = None
     require_status = requirement.status
     answer = AnswerRequire.query.filter_by(userrequire_id=requirement.id, answer_uid=uid).first()
-    if answer is None:
+    if answer is not None:
         return jsonify({'status': 112})
     if require_status == UserRequire.WAITING:
         answer = AnswerRequire(userrequire_id, uid, AnswerRequire.WAITING)
@@ -46,10 +46,13 @@ def answer_requirement():
 
 @app.route('/api/get_requirement', methods=['POST'])
 def get_requirement():
+    """
+        获取需求详情
+    """
     userrequire_id = request.form.get('requirement_id', '')
     user_require = UserRequire.query.get(userrequire_id)
     if user_require:
-        answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id)
+        answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id, watch=None)
         for answer in answers:
             answer.watch_time = int(time.time())
             db.session.commit()
@@ -122,7 +125,8 @@ def my_requirements():
                 'accept_user_id': user_require.answer_user,
                 'answer_users': get_answers(user_require.id),
                 'status': user_require.status,
-                'watch_status':  False if user_require.watch_time else True
+                'watch_status': False if AnswerRequire.query.filter_by(userrequire_id=user_require.id,
+                                                                     watch_time=None).first() is None else True
             })
 
         data['needlist'] = needlist
