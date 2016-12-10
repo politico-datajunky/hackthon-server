@@ -45,3 +45,4 @@ def insert_user():
     db.session.add(partcipator8)
     db.session.add(partcipator9)
     db.session.commit()
+    return jsonify({'status': 100})
