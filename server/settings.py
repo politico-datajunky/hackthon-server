@@ -15,4 +15,4 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'mysql://root:borrowday123@localhost:3306/hackthon'
+    SQLALCHEMY_DATABASE_URI = 'mysql://root@localhost:3306/hackthon'

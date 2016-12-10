@@ -52,7 +52,7 @@ def get_requirement():
     userrequire_id = request.form.get('requirement_id', '')
     user_require = UserRequire.query.get(userrequire_id)
     if user_require:
-        answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id, watch=None)
+        answers = AnswerRequire.query.filter_by(userrequire_id=user_require.id, watch_time=None)
         for answer in answers:
             answer.watch_time = int(time.time())
             db.session.commit()

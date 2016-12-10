@@ -15,10 +15,14 @@ def create_topic():
     """
         创建话题，返回话题详情
     """
+    if 'image' in dict(request.form):
+        image = unicode(request.form['image'])
+    else:
+        image = None
     topic = Topic(
         user_id=request.form['uid'],
         content=request.form['content'],
-        image=request.form['image']
+        image="/media/topic/topic1-1.jpg"
     )
     db.session.add(topic)
     db.session.commit()

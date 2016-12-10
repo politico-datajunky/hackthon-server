@@ -210,90 +210,43 @@ def cancel_care():
 
 @app.route('/init_user', methods=['POST'])
 def init_user():
-    user1 = User('100000', '100000')
-    user2 = User('100001', '100001')
-    user3 = User('100002', '100002')
-    user4 = User('100003', '100003')
-    user5 = User('100004', '100004')
-
+    user2 = User(username=111111, password='111111')
+    user3 = User(222222, '222222')
+    user4 = User(333333, '333333')
+    user5 = User(444444, '444444')
+    user6 = User(555555, '555555')
+    user7 = User(666666, '666666')
+    user8 = User(777777, '777777')
+    user9 = User(888888, '888888')
+    user1 = User(999999, '999999')
     db.session.add(user1)
     db.session.add(user2)
     db.session.add(user3)
     db.session.add(user4)
     db.session.add(user5)
+    db.session.add(user6)
+    db.session.add(user7)
+    db.session.add(user8)
+    db.session.add(user9)
     db.session.commit()
 
-    partcipator1 = Participator(
-        user_id=user1.id,
-        name='洞洞',
-        gender=1,
-        avatar='/static/defalut-avatar',
-        company='多盟',
-        position='客户端工程师',
-        phone='18510001000',
-        email='huangdongdong@domob.cn',
-        qq=None,
-        skills='java|android|photoshop',
-        free_time='{1:["13-15", "19-20"],2:[],3:[],4:[],5:[],6:[],7:[]}'
-    )
-    partcipator2 = Participator(
-        user_id=user2.id,
-        name='左烨',
-        gender=1,
-        avatar='/static/defalut-avatar',
-        company='小蓝标',
-        position='销售',
-        phone='18510001000',
-        email='huangdongdong@domob.cn',
-        qq=None,
-        skills='blabla',
-        free_time='{1:["13-15", "19-20"],2:[],3:["15-18"],4:["10-11"],5:[],6:[],7:[]}'
-    )
-    partcipator3 = Participator(
-        user_id=user3.id,
-        name='洞洞',
-        gender=1,
-        avatar='/static/defalut-avatar',
-        company='多盟',
-        position='客户端工程师',
-        phone='18510001000',
-        email='huangdongdong@domob.cn',
-        qq=None,
-        skills='java|android|photoshop',
-        free_time='{1:["13-15", "19-20"],2:[],3:[],4:[],5:[],6:[],7:[]}'
-    )
-    partcipator4 = Participator(
-        user_id=user4.id,
-        name='洞洞',
-        gender=1,
-        avatar='/static/defalut-avatar',
-        company='多盟',
-        position='客户端工程师',
-        phone='18510001000',
-        email='huangdongdong@domob.cn',
-        qq=None,
-        skills='java|android|photoshop',
-        free_time='{1:["13-15", "19-20"],2:[],3:[],4:[],5:[],6:[],7:[]}'
-    )
-    partcipator5 = Participator(
-        user_id=user5.id,
-        name='洞洞',
-        gender=1,
-        avatar='/static/defalut-avatar',
-        company='多盟',
-        position='客户端工程师',
-        phone='18510001000',
-        email='huangdongdong@domob.cn',
-        qq=None,
-        skills='java|android|photoshop',
-        free_time='{1:["13-15", "19-20"],2:[],3:[],4:[],5:[],6:[],7:[]}'
-    )
-
+    partcipator1 = Participator(user_id=user1.id, name=u"胡小然", gender=1, company=u"多盟", position=u"系统研发工程师", skills="all", free_time="12:30-13:30", phone="13528573984", qq="467925576", email="467925576@qq.com")
+    partcipator2 = Participator(user_id=user2.id, name=u"刘小畅", gender=2, company=u"多盟", position=u"产品经理", skills="PM|Axure", free_time="12:30-13:30", phone="13528573985", qq="467925576", email="467925576@qq.com")
+    partcipator3 = Participator(user_id=user3.id, name=u"范小斌", gender=1, company=u"多盟", position=u"前端研发工程师", skills="javascript|vue|react", free_time="12:30-13:30", phone="13528573986", qq="467925576", email="467925576@qq.com")
+    partcipator4 = Participator(user_id=user4.id, name=u"张丽", gender=2, company=u"多盟", position=u"系统研发工程师", skills="php", free_time="12:30-13:30", phone="13528573987", qq="467925576", email="467925576@qq.com")
+    partcipator5 = Participator(user_id=user5.id, name=u"廖小波", gender=1, company=u"多盟", position=u"客户端研发工程师", skills="android|ios", free_time="12:30-13:30", phone="13528573989", qq="467925576", email="467925576@qq.com")
+    partcipator6 = Participator(user_id=user6.id, name=u"吴小川", gender=1, company=u"多盟", position=u"UI设计师", skills="Photoshop", free_time="12:30-13:30", phone="13528573984", qq="467925576", email="467925576@qq.com")
+    partcipator7 = Participator(user_id=user7.id, name=u"陈小宏", gender=2, company=u"多盟", position=u"产品经理", skills="PM|Axure", free_time="12:30-13:30", phone="13528573984", qq="467925576", email="467925576@qq.com")
+    partcipator8 = Participator(user_id=user8.id, name=u"曾小康", gender=1, company=u"多盟", position=u"前端研发工程师", skills="javascript|HTML5", free_time="12:30-13:30", phone="13528573984", qq="467925576", email="467925576@qq.com")
+    partcipator9 = Participator(user_id=user9.id, name=u"于小静", gender=2, company=u"多盟", position=u"UI设计师", skills="Photoshop|UE|AE", free_time="12:30-13:30", phone="13528573984", qq="467925576", email="467925576@qq.com")
     db.session.add(partcipator1)
     db.session.add(partcipator2)
     db.session.add(partcipator3)
     db.session.add(partcipator4)
     db.session.add(partcipator5)
-
+    db.session.add(partcipator6)
+    db.session.add(partcipator7)
+    db.session.add(partcipator8)
+    db.session.add(partcipator9)
     db.session.commit()
-    return jsonify({'status': 'success'})
+    return jsonify({'status': 100})
