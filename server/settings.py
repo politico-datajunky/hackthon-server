@@ -14,6 +14,5 @@ class DevelopmentConfig(Config):
 
 
 class ProductionConfig(Config):
+    DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'mysql://root:borrowday123@localhost:3306/hackthon'
-    ALLOWED_EXTENSIONS = ('png', 'jpg', 'jpeg')
-    UPLOAD_FOLDER = '/data1/www/hackthon/media'
