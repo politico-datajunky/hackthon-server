@@ -1,4 +1,4 @@
-# coding: utf-8
+# -*- coding: utf-8 -*-
 from flask import jsonify, request
 from server import app
 from server.models import User, db, Participator
@@ -6,7 +6,7 @@ from server.models import User, db, Participator
 
 @app.route('/insert/user', methods=['POST'])
 def insert_user():
-    user2 = User(111111, '111111')
+    user2 = User(username=111111, password='111111')
     user3 = User(222222, '222222')
     user4 = User(333333, '333333')
     user5 = User(444444, '444444')
